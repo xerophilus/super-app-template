@@ -7,6 +7,7 @@ import * as ReactNavigationNativeStack from '@react-navigation/native-stack';
 import * as ReactNativeSafeAreaContext from 'react-native-safe-area-context';
 import * as ReactNativeScreens from 'react-native-screens';
 import { MicroAppMetadata, LoadedMicroApp } from '../types/micro-apps';
+import { Platform } from 'react-native';
 
 interface MicroAppContextType {
   availableApps: MicroAppMetadata[];
@@ -58,7 +59,7 @@ interface LoadedModule {
 
 // Configuration for bundle URLs
 const config = {
-  baseUrl: __DEV__ 
+  baseUrl: __DEV__ && Platform.OS === 'web'
     ? 'http://localhost:3000'
     : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}`,
 };
@@ -71,14 +72,28 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
 
   const refreshApps = useCallback(async () => {
     try {
-      const manifestUrl = __DEV__
-        ? 'http://localhost:3000/manifest.json'
-        : `${config.baseUrl}/micro-apps/bundles/manifest.json`;
+      // For web in development, try localhost first
+      let response: Response | null = null;
 
-      const response = await fetch(manifestUrl);
+      if (__DEV__ && Platform.OS === 'web') {
+        try {
+          response = await fetch('http://localhost:3000/manifest.json');
+        } catch (e) {
+          console.log('Failed to fetch from localhost, falling back to GitHub Pages');
+        }
+      }
+
+      // If localhost failed or we're not on web dev, use GitHub Pages
+      if (!response || !response.ok) {
+        const githubPagesUrl = `https://xerophilus.github.io/super-app-template/manifest.json`;
+        console.log('Fetching from GitHub Pages:', githubPagesUrl);
+        response = await fetch(githubPagesUrl);
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch manifest');
       }
+
       const manifest = await response.json();
       setAvailableApps(manifest.apps);
     } catch (error) {
@@ -88,7 +103,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshApps();
-    const interval = setInterval(refreshApps, 5000);
+    const interval = setInterval(refreshApps, 500000);
     return () => clearInterval(interval);
   }, [refreshApps]);
 
@@ -139,6 +154,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
 
       // Function to load a module from a URL
       async function loadModuleFromUrl(url: string): Promise<ModuleExports> {
+        console.log(url)
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Failed to fetch module: ${response.statusText}`);

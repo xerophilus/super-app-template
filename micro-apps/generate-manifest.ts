@@ -72,19 +72,8 @@ function getDefaultProps(appId: string): Record<string, any> {
 }
 
 function getBundleUrl(appId: string): string {
-  // Check if the app uses esbuild (bundle.js) or bob build (commonjs/index.js)
-  const bundlePath = path.join(__dirname, 'bundles', appId, 'bundle.js');
-  const commonjsPath = path.join(__dirname, appId, 'lib', 'commonjs', 'index.js');
-
-  let bundlePathSuffix: string;
-  if (fs.existsSync(bundlePath)) {
-    bundlePathSuffix = `${appId}/bundle.js`;
-  } else if (fs.existsSync(commonjsPath)) {
-    bundlePathSuffix = `${appId}/commonjs/index.js`;
-  } else {
-    console.warn(`Warning: No bundle found for ${appId}, defaulting to bundle.js`);
-    bundlePathSuffix = `${appId}/bundle.js`;
-  }
+  // All apps now use bundle.js
+  const bundlePathSuffix = `${appId}/bundle.js`;
 
   // If using GitHub Pages, format URL accordingly
   if (config.baseUrl.includes('github.io')) {

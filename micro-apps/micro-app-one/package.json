@@ -31,7 +31,8 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli lib",
     "prepare": "bob build",
-    "build": "bob build",
+    "build": "npm run clean && bob build && npm run bundle",
+    "bundle": "esbuild src/index.tsx --bundle --platform=node --format=cjs --outfile=../bundles/micro-app-one/bundle.js --external:react --external:react-native --external:react-native-safe-area-context --external:@react-navigation/native --external:@react-navigation/native-stack --external:react-native-screens",
     "build:watch": "bob watch"
   },
   "keywords": [
@@ -50,6 +51,7 @@
     "@types/jest": "^29.5.5",
     "@types/react": "^18.2.44",
     "del-cli": "^5.1.0",
+    "esbuild": "^0.25.0",
     "eslint": "^8.51.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
