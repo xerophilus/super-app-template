@@ -88,7 +88,7 @@ function getBundleUrl(appId: string): string {
 
   // If using GitHub Pages, format URL accordingly
   if (config.baseUrl.includes('github.io')) {
-    const url = `${config.baseUrl}/${config.repoName}/micro-apps/bundles/${bundlePathSuffix}`;
+    const url = `${config.baseUrl}/${config.repoName}/${bundlePathSuffix}`;
     console.log(`GitHub Pages URL for ${appId}: ${url}`);
     return url;
   }

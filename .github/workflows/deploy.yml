@@ -42,11 +42,13 @@ jobs:
         run: |
           cd micro-apps
           npm run build-all
+          # Copy manifest to bundles directory
+          cp manifest.json bundles/
           ls -la bundles
           ls -la bundles/micro-app-one || true
           ls -la bundles/micro-app-two || true
           ls -la bundles/micro-app-three || true
-          cat manifest.json
+          cat bundles/manifest.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
