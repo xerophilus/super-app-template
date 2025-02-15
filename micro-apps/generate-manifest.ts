@@ -60,6 +60,7 @@ function getDefaultProps(appId: string): Record<string, any> {
 }
 
 function getBundleUrl(appId: string): string {
+  // Bundle path without the bundles prefix since they're deployed to root
   const bundlePathSuffix = `${appId}/bundle.js`;
 
   // If using GitHub Pages, format URL accordingly
@@ -125,26 +126,45 @@ function generateManifest(): Manifest {
 // Generate the manifest
 const manifest = generateManifest();
 
-// Write both a full manifest and a public manifest
-const fullManifestPath = path.join(__dirname, 'manifest.json');
-const publicManifestPath = path.join(__dirname, 'bundles', 'manifest.json');
+// Write different manifest files for different auth levels
+const publicApps = manifest.apps.filter(app => !app.requiresAuth);
+const protectedApps = manifest.apps.filter(app => app.requiresAuth);
 
-// Full manifest includes all apps (for authenticated users)
-fs.writeFileSync(fullManifestPath, JSON.stringify(manifest, null, 2));
+// Write the manifests to the bundles directory
+const bundlesDir = path.join(__dirname, 'bundles');
+fs.mkdirSync(bundlesDir, { recursive: true });
 
-// Public manifest excludes apps that require auth
-const publicManifest = {
-  apps: manifest.apps.filter(app => !app.requiresAuth),
-};
-fs.writeFileSync(publicManifestPath, JSON.stringify(publicManifest, null, 2));
+// Public manifest (no auth required)
+const publicManifest = { apps: publicApps };
+fs.writeFileSync(
+  path.join(bundlesDir, 'public-manifest.json'),
+  JSON.stringify(publicManifest, null, 2)
+);
+
+// Protected manifest (auth required)
+const protectedManifest = { apps: protectedApps };
+fs.writeFileSync(
+  path.join(bundlesDir, 'protected-manifest.json'),
+  JSON.stringify(protectedManifest, null, 2)
+);
+
+// Full manifest (all apps)
+fs.writeFileSync(
+  path.join(bundlesDir, 'manifest.json'),
+  JSON.stringify(manifest, null, 2)
+);
 
 // Log the results
 console.log('Generated manifests with configuration:', config);
-console.log('\nFull manifest apps:');
-manifest.apps.forEach(app => {
+console.log('\nPublic apps:');
+publicApps.forEach(logAppInfo);
+console.log('\nProtected apps:');
+protectedApps.forEach(logAppInfo);
+
+function logAppInfo(app: MicroAppManifest) {
   console.log(`- ${app.name} v${app.version} (${app.id})`);
   console.log(`  Description: ${app.description}`);
   console.log(`  Auth Required: ${app.requiresAuth}`);
   console.log(`  Bundle URL: ${app.bundleUrl}`);
   console.log();
-}); 
+} 

@@ -79,26 +79,26 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
       let response: Response | null = null;
       let manifestUrl: string;
 
-      // if (__DEV__) {
+      // Determine the base URL based on environment
+      const baseUrl = __DEV__ && Platform.OS === 'web'
+        ? 'http://localhost:3000'
+        : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}`;
+
+      // Try to fetch the appropriate manifest based on auth status
+      if (authToken) {
+        // Try to fetch the full manifest first
         try {
-          // In development web, try localhost first
-          manifestUrl = authToken 
-            ? 'http://localhost:3000/manifest.json'  // Full manifest for authenticated users
-            : 'http://localhost:3000/bundles/manifest.json';  // Public manifest
+          manifestUrl = `${baseUrl}/bundles/manifest.json`;
           response = await fetch(manifestUrl);
         } catch (e) {
-          console.log('Failed to fetch from localhost, falling back to GitHub Pages');
+          console.log('Failed to fetch full manifest');
         }
-      // }
+      }
 
-      // If localhost failed or we're not in web dev, use GitHub Pages
+      // If no auth token or full manifest fetch failed, get the public manifest
       if (!response || !response.ok) {
-        manifestUrl = authToken 
-          ? `${config.baseUrl}/manifest.json`  // Full manifest for authenticated users
-          : `${config.baseUrl}/public-manifest.json`;  // Public manifest
-        response = await fetch(manifestUrl, {
-          headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {},
-        });
+        manifestUrl = `${baseUrl}/bundles/public-manifest.json`;
+        response = await fetch(manifestUrl);
       }
 
       if (!response.ok) {
@@ -107,10 +107,8 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
 
       const manifest = await response.json();
       
-      // Get the set of valid app IDs from the manifest
-      const validAppIds = new Set(manifest.apps.map((app: MicroAppMetadata) => app.id));
-      
       // Clean up any loaded apps that are no longer in the manifest
+      const validAppIds = new Set(manifest.apps.map((app: MicroAppMetadata) => app.id));
       setLoadedApps(prev => {
         const newLoadedApps = { ...prev };
         Object.keys(newLoadedApps).forEach(appId => {

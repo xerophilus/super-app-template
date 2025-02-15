@@ -26,9 +26,11 @@ jobs:
 
       - name: Create bundles directory
         run: |
+          mkdir -p micro-apps/bundles
           mkdir -p micro-apps/bundles/micro-app-one
           mkdir -p micro-apps/bundles/micro-app-two
           mkdir -p micro-apps/bundles/micro-app-three
+          mkdir -p micro-apps/bundles/micro-app-four
 
       - name: Install Dependencies
         run: |
@@ -42,22 +44,18 @@ jobs:
         run: |
           cd micro-apps
           npm run build-all
-          # Copy both manifests to their correct locations
-          # Full manifest at the root for authenticated users
+          # Move bundles to root of deployment
+          mv bundles/micro-app-*/bundle.js bundles/
+          # Clean up empty directories
+          rm -rf bundles/micro-app-*
+          # Ensure manifest is in the root
           cp manifest.json bundles/manifest.json
-          # Public manifest in bundles directory for unauthenticated users
-          cp bundles/manifest.json bundles/public-manifest.json
+          cp manifest.json bundles/public-manifest.json
           # List contents for verification
           echo "Contents of bundles directory:"
           ls -la bundles
-          echo "Contents of micro-app bundles:"
-          ls -la bundles/micro-app-one || true
-          ls -la bundles/micro-app-two || true
-          ls -la bundles/micro-app-three || true
-          echo "Full manifest content:"
+          echo "Manifest content:"
           cat bundles/manifest.json
-          echo "Public manifest content:"
-          cat bundles/public-manifest.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
