@@ -21,7 +21,8 @@ interface MicroAppManifest {
   icon: MicroAppIcon;
   bundleUrl: string;
   defaultProps: Record<string, any>;
-  requiresAuth?: boolean;
+  requiresAuth: boolean;
+  version: string;
 }
 
 interface Manifest {
@@ -33,27 +34,12 @@ function getDefaultIcon(appId: string): MicroAppIcon {
     'micro-app-one': '📱',
     'micro-app-two': '🎮',
     'micro-app-three': '🎅',
+    'micro-app-four': '🐛',
   };
   return {
     type: 'emoji',
     value: icons[appId] || '📱',
   };
-}
-
-function getDefaultName(appId: string): string {
-  return appId
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function getDefaultDescription(appId: string): string {
-  const descriptions: Record<string, string> = {
-    'micro-app-one': 'The first micro app',
-    'micro-app-two': 'The second micro app',
-    'micro-app-three': "Create your Christmas wish list",
-  };
-  return descriptions[appId] || `A micro app`;
 }
 
 function getDefaultProps(appId: string): Record<string, any> {
@@ -68,25 +54,21 @@ function getDefaultProps(appId: string): Record<string, any> {
       name: 'Guest',
       gender: 'Unknown',
     },
+    'micro-app-four': {},
   };
   return defaultProps[appId] || {};
 }
 
 function getBundleUrl(appId: string): string {
-  // All apps now use bundle.js
   const bundlePathSuffix = `${appId}/bundle.js`;
 
   // If using GitHub Pages, format URL accordingly
   if (config.baseUrl.includes('github.io')) {
-    const url = `${config.baseUrl}/${config.repoName}/${bundlePathSuffix}`;
-    console.log(`GitHub Pages URL for ${appId}: ${url}`);
-    return url;
+    return `${config.baseUrl}/${config.repoName}/${bundlePathSuffix}`;
   }
 
   // For local development
-  const url = `${config.baseUrl}/${bundlePathSuffix}`;
-  console.log(`Local URL for ${appId}: ${url}`);
-  return url;
+  return `${config.baseUrl}/${bundlePathSuffix}`;
 }
 
 function generateManifest(): Manifest {
@@ -111,20 +93,31 @@ function generateManifest(): Manifest {
     // Read the package.json
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
+    // Check if this is a micro-app by looking for the bundle script
+    if (!packageJson.scripts?.bundle) {
+      continue;
+    }
+
     const appId = entry.name;
     const app: MicroAppManifest = {
       id: appId,
-      name: getDefaultName(appId),
-      description: packageJson.description || getDefaultDescription(appId),
+      name: packageJson.name.split('/').pop()?.split('-').map(
+        (word: string) => word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ') || appId,
+      description: packageJson.description || `A micro app`,
       icon: getDefaultIcon(appId),
       bundleUrl: getBundleUrl(appId),
       defaultProps: getDefaultProps(appId),
-      // Only micro-app-three requires auth
+      // Only micro-app-three requires auth by default
       requiresAuth: appId === 'micro-app-three',
+      version: packageJson.version,
     };
 
     apps.push(app);
   }
+
+  // Sort apps by ID to maintain consistent order
+  apps.sort((a, b) => a.id.localeCompare(b.id));
 
   return { apps };
 }
@@ -145,13 +138,13 @@ const publicManifest = {
 };
 fs.writeFileSync(publicManifestPath, JSON.stringify(publicManifest, null, 2));
 
-console.log('Config:', config);
-console.log('Generated manifests:');
-console.log('Full manifest:', JSON.stringify(manifest, null, 2));
-console.log('Public manifest:', JSON.stringify(publicManifest, null, 2));
-
-console.log(`Generated manifest.json with base URL: ${config.baseUrl}`);
+// Log the results
+console.log('Generated manifests with configuration:', config);
+console.log('\nFull manifest apps:');
 manifest.apps.forEach(app => {
-  console.log(`- ${app.name} (${app.id})`);
+  console.log(`- ${app.name} v${app.version} (${app.id})`);
+  console.log(`  Description: ${app.description}`);
+  console.log(`  Auth Required: ${app.requiresAuth}`);
   console.log(`  Bundle URL: ${app.bundleUrl}`);
+  console.log();
 }); 

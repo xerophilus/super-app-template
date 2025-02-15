@@ -1,6 +1,19 @@
 {
   "apps": [
     {
+      "id": "micro-app-four",
+      "name": "Micro App Four",
+      "description": "Error testing micro app",
+      "icon": {
+        "type": "emoji",
+        "value": "🐛"
+      },
+      "bundleUrl": "http://localhost:3000/micro-app-four/bundle.js",
+      "defaultProps": {},
+      "requiresAuth": false,
+      "version": "0.1.0"
+    },
+    {
       "id": "micro-app-one",
       "name": "Micro App One",
       "description": "the first micro app",
@@ -12,21 +25,8 @@
       "defaultProps": {
         "theme": "light"
       },
-      "requiresAuth": false
-    },
-    {
-      "id": "micro-app-two",
-      "name": "Micro App Two",
-      "description": "second micro app",
-      "icon": {
-        "type": "emoji",
-        "value": "🎮"
-      },
-      "bundleUrl": "http://localhost:3000/micro-app-two/bundle.js",
-      "defaultProps": {
-        "theme": "light"
-      },
-      "requiresAuth": false
+      "requiresAuth": false,
+      "version": "0.1.0"
     },
     {
       "id": "micro-app-three",
@@ -41,7 +41,23 @@
         "name": "Guest",
         "gender": "Unknown"
       },
-      "requiresAuth": true
+      "requiresAuth": true,
+      "version": "0.1.0"
+    },
+    {
+      "id": "micro-app-two",
+      "name": "Micro App Two",
+      "description": "second micro app",
+      "icon": {
+        "type": "emoji",
+        "value": "🎮"
+      },
+      "bundleUrl": "http://localhost:3000/micro-app-two/bundle.js",
+      "defaultProps": {
+        "theme": "light"
+      },
+      "requiresAuth": false,
+      "version": "0.1.0"
     }
   ]
 }

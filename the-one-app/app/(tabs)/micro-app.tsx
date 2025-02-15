@@ -1,31 +1,40 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { Suspense } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useMicroApps } from '../../context/MicroAppContext';
-import { ThemedText } from '@/components/ThemedText';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
+
+function LoadingFallback() {
+  return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
+}
 
 export default function MicroAppScreen() {
   const { currentApp, loadedApps, getAppProps } = useMicroApps();
 
   if (!currentApp || !loadedApps[currentApp]) {
-    return (
-      <View style={styles.container}>
-        <ThemedText>No micro-app selected</ThemedText>
-      </View>
-    );
+    return <LoadingFallback />;
   }
 
-  const { Component } = loadedApps[currentApp];
+  const { Component, metadata } = loadedApps[currentApp];
   const props = getAppProps(currentApp);
 
   return (
-    <View style={styles.container}>
-      <Component {...props} />
-    </View>
+    <ErrorBoundary appId={currentApp}>
+      <Suspense fallback={<LoadingFallback />}>
+        <Component {...props} />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
 }); 

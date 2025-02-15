@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import * as ReactJSXRuntime from 'react/jsx-runtime';
 import * as ReactNative from 'react-native';
@@ -7,7 +7,7 @@ import * as ReactNavigationNativeStack from '@react-navigation/native-stack';
 import * as ReactNativeSafeAreaContext from 'react-native-safe-area-context';
 import * as ReactNativeScreens from 'react-native-screens';
 import { MicroAppMetadata, LoadedMicroApp } from '../types/micro-apps';
-import { Platform } from 'react-native';
+import { Platform, ActivityIndicator, View } from 'react-native';
 
 interface MicroAppContextType {
   availableApps: MicroAppMetadata[];
@@ -96,7 +96,6 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         manifestUrl = authToken 
           ? `${config.baseUrl}/manifest.json`  // Full manifest for authenticated users
           : `${config.baseUrl}/public-manifest.json`;  // Public manifest
-        console.log('Fetching from GitHub Pages:', manifestUrl);
         response = await fetch(manifestUrl, {
           headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {},
         });
@@ -178,50 +177,55 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Fetch the bundle
-      const response = await fetch(metadata.bundleUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch bundle: ${response.statusText}`);
-      }
-
-      const bundleCode = await response.text();
-
-      // Create a module context with the global dependencies
-      const module = { exports: {} as ModuleExports };
-      const require = (moduleName: string) => {
-        switch (moduleName) {
-          case 'react':
-            return React;
-          case 'react-native':
-            return ReactNative;
-          case 'react/jsx-runtime':
-            return ReactJSXRuntime;
-          case '@react-navigation/native':
-            return ReactNavigation;
-          case '@react-navigation/native-stack':
-            return ReactNavigationNativeStack;
-          case 'react-native-safe-area-context':
-            return ReactNativeSafeAreaContext;
-          case 'react-native-screens':
-            return ReactNativeScreens;
-          default:
-            throw new Error(`Unexpected external module: ${moduleName}`);
+      // Create a lazy-loaded component
+      const LazyComponent = React.lazy(async () => {
+        // Fetch the bundle
+        const response = await fetch(metadata.bundleUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch bundle: ${response.statusText}`);
         }
-      };
 
-      // Execute the bundle
-      const moduleFunction = new Function('module', 'exports', 'require', bundleCode);
-      moduleFunction(module, module.exports, require);
+        const bundleCode = await response.text();
 
-      // Get the component
-      const Component = module.exports.default || Object.values(module.exports)[0];
-      if (typeof Component !== 'function') {
-        throw new Error('Bundle does not export a valid React component');
-      }
+        // Create a module context with the global dependencies
+        const module = { exports: {} as ModuleExports };
+        const require = (moduleName: string) => {
+          switch (moduleName) {
+            case 'react':
+              return React;
+            case 'react-native':
+              return ReactNative;
+            case 'react/jsx-runtime':
+              return ReactJSXRuntime;
+            case '@react-navigation/native':
+              return ReactNavigation;
+            case '@react-navigation/native-stack':
+              return ReactNavigationNativeStack;
+            case 'react-native-safe-area-context':
+              return ReactNativeSafeAreaContext;
+            case 'react-native-screens':
+              return ReactNativeScreens;
+            default:
+              throw new Error(`Unexpected external module: ${moduleName}`);
+          }
+        };
+
+        // Execute the bundle
+        const moduleFunction = new Function('module', 'exports', 'require', bundleCode);
+        moduleFunction(module, module.exports, require);
+
+        // Get the component
+        const Component = module.exports.default || Object.values(module.exports)[0];
+        if (typeof Component !== 'function') {
+          throw new Error('Bundle does not export a valid React component');
+        }
+
+        return { default: Component };
+      });
 
       setLoadedApps(prev => ({
         ...prev,
-        [metadata.id]: { Component, metadata },
+        [metadata.id]: { Component: LazyComponent, metadata },
       }));
     } catch (error) {
       console.error('Error loading micro-app:', error);
