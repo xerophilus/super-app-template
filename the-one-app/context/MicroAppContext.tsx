@@ -76,36 +76,58 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
 
   const refreshApps = useCallback(async () => {
     try {
-      let response: Response | null = null;
-      let manifestUrl: string;
-
       // Determine the base URL based on environment
       const baseUrl = __DEV__ && Platform.OS === 'web'
         ? 'http://localhost:3000'
         : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}`;
 
+      console.log('Fetching manifest from base URL:', baseUrl);
+
+      let manifestUrl: string;
+      let response: Response | null = null;
+
       // Try to fetch the appropriate manifest based on auth status
       if (authToken) {
         // Try to fetch the full manifest first
         try {
-          manifestUrl = `${baseUrl}/bundles/manifest.json`;
-          response = await fetch(manifestUrl);
+          manifestUrl = `${baseUrl}/manifest.json`;
+          console.log('Attempting to fetch full manifest from:', manifestUrl);
+          response = await fetch(manifestUrl, {
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (!response.ok) {
+            console.log(`Full manifest fetch failed with status: ${response.status}`);
+            throw new Error('Full manifest not available');
+          }
         } catch (e) {
-          console.log('Failed to fetch full manifest');
+          console.error('Failed to fetch full manifest:', e);
+          response = null;
         }
       }
 
       // If no auth token or full manifest fetch failed, get the public manifest
       if (!response || !response.ok) {
-        manifestUrl = `${baseUrl}/bundles/public-manifest.json`;
-        response = await fetch(manifestUrl);
+        manifestUrl = `${baseUrl}/public-manifest.json`;
+        console.log('Attempting to fetch public manifest from:', manifestUrl);
+        response = await fetch(manifestUrl, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
       }
 
       if (!response.ok) {
-        throw new Error('Failed to fetch manifest');
+        throw new Error(`Failed to fetch manifest: ${response.status} ${response.statusText}`);
       }
 
       const manifest = await response.json();
+      console.log('Successfully loaded manifest with apps:', manifest.apps.length);
+      console.log('Available apps:', manifest.apps.map((app: MicroAppMetadata) => app.id).join(', '));
       
       // Clean up any loaded apps that are no longer in the manifest
       const validAppIds = new Set(manifest.apps.map((app: MicroAppMetadata) => app.id));

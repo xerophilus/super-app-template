@@ -39,20 +39,42 @@ jobs:
           REPO_NAME: super-app-template
         run: |
           cd micro-apps
+          # Build all micro-apps
           npm run build-all
-          # Move bundles to their final locations
-          for app in micro-app-*; do
-            if [ -f "bundles/$app/bundle.js" ]; then
-              mv "bundles/$app/bundle.js" "bundles/$app.bundle.js"
+          
+          # Rename bundle files to their final names
+          find bundles -type f -name "bundle.js" | while read file; do
+            dir=$(dirname "$file")
+            app=$(basename "$dir")
+            mv "$file" "bundles/$app.bundle.js"
+          done
+          
+          # Clean up empty directories
+          find bundles -type d -empty -delete
+          
+          # Verify deployment files
+          echo "=== Contents of bundles directory ==="
+          ls -la bundles
+          
+          echo "=== Verifying manifest files ==="
+          for manifest in manifest.json public-manifest.json protected-manifest.json; do
+            if [ -f "bundles/$manifest" ]; then
+              echo "✓ Found $manifest"
+              echo "Content of $manifest:"
+              cat "bundles/$manifest"
+              echo "---"
+            else
+              echo "✗ Missing $manifest"
+              exit 1
             fi
           done
-          # Clean up empty directories
-          rm -rf bundles/micro-app-*
-          # List contents for verification
-          echo "Contents of bundles directory:"
-          ls -la bundles
-          echo "Manifest content:"
-          cat bundles/manifest.json
+          
+          echo "=== Verifying bundle files ==="
+          for bundle in bundles/*.bundle.js; do
+            if [ -f "$bundle" ]; then
+              echo "✓ Found $(basename "$bundle")"
+            fi
+          done
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
