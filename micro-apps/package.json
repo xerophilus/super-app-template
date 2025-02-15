@@ -2,9 +2,15 @@
   "name": "micro-apps",
   "version": "1.0.0",
   "description": "Micro apps collection",
+  "private": true,
+  "workspaces": [
+    "micro-app-one",
+    "micro-app-two",
+    "micro-app-three"
+  ],
   "scripts": {
     "generate-manifest": "ts-node generate-manifest.ts",
-    "build-all": "npm run build -w micro-app-one && npm run build -w micro-app-two && npm run build -w micro-app-three && npm run generate-manifest"
+    "build-all": "npm run build --workspace=micro-app-one && npm run build --workspace=micro-app-two && npm run build --workspace=micro-app-three && npm run generate-manifest"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",

@@ -28,9 +28,6 @@ jobs:
         run: |
           cd micro-apps
           npm install
-          npm install -w micro-app-one
-          npm install -w micro-app-two
-          npm install -w micro-app-three
 
       - name: Build Micro Apps
         env:
