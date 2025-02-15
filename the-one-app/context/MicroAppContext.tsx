@@ -18,6 +18,9 @@ interface MicroAppContextType {
   setAppProps: (appId: string, props: Record<string, any>) => void;
   getAppProps: (appId: string) => Record<string, any>;
   refreshApps: () => Promise<void>;
+  authenticate: (token: string) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
 }
 
 const MicroAppContext = createContext<MicroAppContextType | null>(null);
@@ -69,25 +72,32 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
   const [loadedApps, setLoadedApps] = useState<Record<string, LoadedMicroApp>>({});
   const [currentApp, setCurrentApp] = useState<string | null>(null);
   const [appProps, setAppPropsState] = useState<Record<string, Record<string, any>>>({});
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   const refreshApps = useCallback(async () => {
     try {
-      // For web in development, try localhost first
       let response: Response | null = null;
+      let manifestUrl: string;
 
       if (__DEV__ && Platform.OS === 'web') {
         try {
-          response = await fetch('http://localhost:3000/manifest.json');
+          // In development web, try localhost first
+          manifestUrl = authToken 
+            ? 'http://localhost:3000/manifest.json'  // Full manifest for authenticated users
+            : 'http://localhost:3000/bundles/manifest.json';  // Public manifest
+          response = await fetch(manifestUrl);
         } catch (e) {
           console.log('Failed to fetch from localhost, falling back to GitHub Pages');
         }
       }
 
-      // If localhost failed or we're not on web dev, use GitHub Pages
+      // If localhost failed or we're not in web dev, use GitHub Pages
       if (!response || !response.ok) {
-        const githubPagesUrl = `https://xerophilus.github.io/super-app-template/manifest.json`;
-        console.log('Fetching from GitHub Pages:', githubPagesUrl);
-        response = await fetch(githubPagesUrl);
+        manifestUrl = `${config.baseUrl}/${process.env.EXPO_PUBLIC_REPO_NAME}/${authToken ? 'manifest.json' : 'bundles/manifest.json'}`;
+        console.log('Fetching from GitHub Pages:', manifestUrl);
+        response = await fetch(manifestUrl, {
+          headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {},
+        });
       }
 
       if (!response.ok) {
@@ -99,11 +109,21 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error loading manifest:', error);
     }
+  }, [authToken]);
+
+  // Mock authentication function (replace with real auth later)
+  const authenticate = useCallback((token: string) => {
+    setAuthToken(token);
+  }, []);
+
+  const logout = useCallback(() => {
+    setAuthToken(null);
+    setCurrentApp(null);
   }, []);
 
   useEffect(() => {
     refreshApps();
-    const interval = setInterval(refreshApps, 500000);
+    const interval = setInterval(refreshApps, 5000);
     return () => clearInterval(interval);
   }, [refreshApps]);
 
@@ -264,6 +284,9 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         setAppProps,
         getAppProps,
         refreshApps,
+        authenticate,
+        logout,
+        isAuthenticated: !!authToken,
       }}
     >
       {children}

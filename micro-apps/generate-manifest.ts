@@ -21,6 +21,7 @@ interface MicroAppManifest {
   icon: MicroAppIcon;
   bundleUrl: string;
   defaultProps: Record<string, any>;
+  requiresAuth?: boolean;
 }
 
 interface Manifest {
@@ -118,6 +119,8 @@ function generateManifest(): Manifest {
       icon: getDefaultIcon(appId),
       bundleUrl: getBundleUrl(appId),
       defaultProps: getDefaultProps(appId),
+      // Only micro-app-three requires auth
+      requiresAuth: appId === 'micro-app-three',
     };
 
     apps.push(app);
@@ -129,12 +132,23 @@ function generateManifest(): Manifest {
 // Generate the manifest
 const manifest = generateManifest();
 
-// Write the manifest to disk
-const manifestPath = path.join(__dirname, 'manifest.json');
-fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+// Write both a full manifest and a public manifest
+const fullManifestPath = path.join(__dirname, 'manifest.json');
+const publicManifestPath = path.join(__dirname, 'bundles', 'manifest.json');
+
+// Full manifest includes all apps (for authenticated users)
+fs.writeFileSync(fullManifestPath, JSON.stringify(manifest, null, 2));
+
+// Public manifest excludes apps that require auth
+const publicManifest = {
+  apps: manifest.apps.filter(app => !app.requiresAuth),
+};
+fs.writeFileSync(publicManifestPath, JSON.stringify(publicManifest, null, 2));
 
 console.log('Config:', config);
-console.log('Generated manifest:', JSON.stringify(manifest, null, 2));
+console.log('Generated manifests:');
+console.log('Full manifest:', JSON.stringify(manifest, null, 2));
+console.log('Public manifest:', JSON.stringify(publicManifest, null, 2));
 
 console.log(`Generated manifest.json with base URL: ${config.baseUrl}`);
 manifest.apps.forEach(app => {

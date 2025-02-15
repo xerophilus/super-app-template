@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Switch } from 'react-native';
 import { useMicroApps } from '../../context/MicroAppContext';
 
 type GenderOption = 'Unknown' | 'Male' | 'Female';
 
 export default function SettingsScreen() {
-  const { setAppProps } = useMicroApps();
+  const { setAppProps, authenticate, logout, isAuthenticated } = useMicroApps();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<GenderOption>('Unknown');
 
@@ -14,6 +14,15 @@ export default function SettingsScreen() {
       name: name || 'Guest',
       gender,
     });
+  };
+
+  const handleAuth = () => {
+    if (isAuthenticated) {
+      logout();
+    } else {
+      // Mock token for demo purposes
+      authenticate('demo-token');
+    }
   };
 
   const GenderButton = ({ value, label }: { value: GenderOption; label: string }) => (
@@ -37,31 +46,67 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Santa's Helper Settings 🎅</Text>
+      <Text style={styles.title}>Settings</Text>
       
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Your Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter your name"
-          placeholderTextColor="#95A5A6"
-        />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Authentication</Text>
+        <TouchableOpacity 
+          style={[styles.authButton, isAuthenticated && styles.logoutButton]} 
+          onPress={handleAuth}
+        >
+          <Text style={styles.authButtonText}>
+            {isAuthenticated ? 'Sign Out' : 'Sign In'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.authStatus}>
+          Status: {isAuthenticated ? 'Authenticated ✅' : 'Not Authenticated ❌'}
+        </Text>
       </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>I am a...</Text>
-        <View style={styles.genderButtonGroup}>
-          <GenderButton value="Unknown" label="Secret" />
-          <GenderButton value="Male" label="Boy" />
-          <GenderButton value="Female" label="Girl" />
+      {isAuthenticated && (
+        <>
+          <View style={styles.divider} />
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Santa's Helper Settings 🎅</Text>
+            <Text style={styles.sectionDescription}>
+              Customize your experience with Santa's Wish List app
+            </Text>
+          
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Your Name</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter your name"
+                placeholderTextColor="#95A5A6"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>I am a...</Text>
+              <View style={styles.genderButtonGroup}>
+                <GenderButton value="Unknown" label="Secret" />
+                <GenderButton value="Male" label="Boy" />
+                <GenderButton value="Female" label="Girl" />
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Save Settings ✨</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
+      {!isAuthenticated && (
+        <View style={styles.section}>
+          <Text style={styles.lockedFeatureText}>
+            🔒 Sign in to access Santa's Helper settings and create your Christmas wish list!
+          </Text>
         </View>
-      </View>
-
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save Settings ✨</Text>
-      </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -78,6 +123,41 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 30,
     textAlign: 'center',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#34495E',
+    marginBottom: 12,
+  },
+  authButton: {
+    backgroundColor: '#27AE60',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  logoutButton: {
+    backgroundColor: '#E74C3C',
+  },
+  authButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  authStatus: {
+    fontSize: 14,
+    color: '#7F8C8D',
+    textAlign: 'center',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 24,
   },
   inputContainer: {
     marginBottom: 20,
@@ -143,5 +223,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: '#7F8C8D',
+    marginBottom: 16,
+  },
+  lockedFeatureText: {
+    fontSize: 16,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    marginTop: 20,
+    paddingHorizontal: 20,
+    lineHeight: 22,
   },
 }); 
