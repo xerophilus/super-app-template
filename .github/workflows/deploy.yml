@@ -27,10 +27,6 @@ jobs:
       - name: Create bundles directory
         run: |
           mkdir -p micro-apps/bundles
-          mkdir -p micro-apps/bundles/micro-app-one
-          mkdir -p micro-apps/bundles/micro-app-two
-          mkdir -p micro-apps/bundles/micro-app-three
-          mkdir -p micro-apps/bundles/micro-app-four
 
       - name: Install Dependencies
         run: |
@@ -44,13 +40,14 @@ jobs:
         run: |
           cd micro-apps
           npm run build-all
-          # Move bundles to root of deployment
-          mv bundles/micro-app-*/bundle.js bundles/
+          # Move bundles to their final locations
+          for app in micro-app-*; do
+            if [ -f "bundles/$app/bundle.js" ]; then
+              mv "bundles/$app/bundle.js" "bundles/$app.bundle.js"
+            fi
+          done
           # Clean up empty directories
           rm -rf bundles/micro-app-*
-          # Ensure manifest is in the root
-          cp manifest.json bundles/manifest.json
-          cp manifest.json bundles/public-manifest.json
           # List contents for verification
           echo "Contents of bundles directory:"
           ls -la bundles

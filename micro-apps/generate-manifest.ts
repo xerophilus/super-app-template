@@ -60,8 +60,8 @@ function getDefaultProps(appId: string): Record<string, any> {
 }
 
 function getBundleUrl(appId: string): string {
-  // Bundle path without the bundles prefix since they're deployed to root
-  const bundlePathSuffix = `${appId}/bundle.js`;
+  // Use the new bundle naming convention
+  const bundlePathSuffix = `${appId}.bundle.js`;
 
   // If using GitHub Pages, format URL accordingly
   if (config.baseUrl.includes('github.io')) {
