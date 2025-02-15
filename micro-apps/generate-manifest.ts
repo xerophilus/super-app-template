@@ -6,7 +6,7 @@ const config = {
   // Default to localhost, can be overridden by BUNDLE_BASE_URL environment variable
   baseUrl: process.env.BUNDLE_BASE_URL || 'http://localhost:3000',
   // Repository name from package.json or environment variable
-  repoName: process.env.REPO_NAME || 'super-app-poc'
+  repoName: process.env.REPO_NAME || 'super-app-template'
 };
 
 interface MicroAppIcon {
@@ -82,16 +82,21 @@ function getBundleUrl(appId: string): string {
   } else if (fs.existsSync(commonjsPath)) {
     bundlePathSuffix = `${appId}/commonjs/index.js`;
   } else {
+    console.warn(`Warning: No bundle found for ${appId}, defaulting to bundle.js`);
     bundlePathSuffix = `${appId}/bundle.js`;
   }
 
   // If using GitHub Pages, format URL accordingly
   if (config.baseUrl.includes('github.io')) {
-    return `${config.baseUrl}/${config.repoName}/micro-apps/bundles/${bundlePathSuffix}`;
+    const url = `${config.baseUrl}/${config.repoName}/micro-apps/bundles/${bundlePathSuffix}`;
+    console.log(`GitHub Pages URL for ${appId}: ${url}`);
+    return url;
   }
 
   // For local development
-  return `${config.baseUrl}/${bundlePathSuffix}`;
+  const url = `${config.baseUrl}/${bundlePathSuffix}`;
+  console.log(`Local URL for ${appId}: ${url}`);
+  return url;
 }
 
 function generateManifest(): Manifest {
@@ -138,6 +143,9 @@ const manifest = generateManifest();
 // Write the manifest to disk
 const manifestPath = path.join(__dirname, 'manifest.json');
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+
+console.log('Config:', config);
+console.log('Generated manifest:', JSON.stringify(manifest, null, 2));
 
 console.log(`Generated manifest.json with base URL: ${config.baseUrl}`);
 manifest.apps.forEach(app => {
