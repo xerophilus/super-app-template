@@ -1,0 +1,44 @@
+{
+  "apps": [
+    {
+      "id": "micro-app-one",
+      "name": "Micro App One",
+      "description": "the first micro app",
+      "icon": {
+        "type": "emoji",
+        "value": "📱"
+      },
+      "bundleUrl": "http://localhost:3000/micro-app-one/commonjs/index.js",
+      "defaultProps": {
+        "theme": "light"
+      }
+    },
+    {
+      "id": "micro-app-three",
+      "name": "Micro App Three",
+      "description": "Santa's Wish List micro app",
+      "icon": {
+        "type": "emoji",
+        "value": "🎅"
+      },
+      "bundleUrl": "http://localhost:3000/micro-app-three/commonjs/index.js",
+      "defaultProps": {
+        "name": "Guest",
+        "gender": "Unknown"
+      }
+    },
+    {
+      "id": "micro-app-two",
+      "name": "Micro App Two",
+      "description": "second micro app",
+      "icon": {
+        "type": "emoji",
+        "value": "🎮"
+      },
+      "bundleUrl": "http://localhost:3000/micro-app-two/bundle.js",
+      "defaultProps": {
+        "theme": "light"
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "super-app-poc",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "the-one-app",
+    "micro-apps/*"
+  ],
+  "scripts": {
+    "serve-bundles": "serve -s micro-apps/bundles -l 3000",
+    "start-expo": "cd the-one-app && npm run ios",
+    "dev": "concurrently \"npm run serve-bundles\" \"npm run start-expo\"",
+    "clean": "rm -rf micro-apps/bundles && mkdir -p micro-apps/bundles/micro-app-one micro-apps/bundles/micro-app-two",
+    "build-micro-app-one": "cd micro-apps/micro-app-one && npm run build && cp -r lib/* ../../micro-apps/bundles/micro-app-one/",
+    "build-micro-app-two": "cd micro-apps/micro-app-two && npm run build && cp -r lib/* ../../micro-apps/bundles/micro-app-two/",
+    "build-micro-app-three": "cd micro-apps/micro-app-three && npm run build && cp -r lib/* ../../micro-apps/bundles/micro-app-three/",
+    "build-micro-apps": "npm run clean && npm run build-micro-app-one && npm run build-micro-app-two && cp micro-apps/manifest.json micro-apps/bundles/",
+    "build-and-dev": "npm run build-micro-apps && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "serve": "^14.2.1"
+  }
+} 
