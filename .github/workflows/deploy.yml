@@ -46,6 +46,7 @@ jobs:
           find bundles -type f -name "bundle.js" | while read file; do
             dir=$(dirname "$file")
             app=$(basename "$dir")
+            echo "Moving bundle from $file to bundles/$app.bundle.js"
             mv "$file" "bundles/$app.bundle.js"
           done
           
@@ -70,9 +71,19 @@ jobs:
           done
           
           echo "=== Verifying bundle files ==="
-          for bundle in bundles/*.bundle.js; do
-            if [ -f "$bundle" ]; then
-              echo "✓ Found $(basename "$bundle")"
+          expected_bundles=(
+            "micro-app-one.bundle.js"
+            "micro-app-two.bundle.js"
+            "micro-app-three.bundle.js"
+            "micro-app-four.bundle.js"
+          )
+          
+          for bundle in "${expected_bundles[@]}"; do
+            if [ -f "bundles/$bundle" ]; then
+              echo "✓ Found $bundle ($(stat -f%z "bundles/$bundle") bytes)"
+            else
+              echo "✗ Missing $bundle"
+              exit 1
             fi
           done
 

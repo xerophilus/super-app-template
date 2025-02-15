@@ -197,19 +197,37 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      console.log(`Loading micro-app: ${metadata.id}`);
+      console.log(`Bundle URL: ${metadata.bundleUrl}`);
+
       // Create a lazy-loaded component
       const LazyComponent = React.lazy(async () => {
         // Fetch the bundle
-        const response = await fetch(metadata.bundleUrl);
+        console.log(`Fetching bundle for ${metadata.id}...`);
+        const response = await fetch(metadata.bundleUrl, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
         if (!response.ok) {
-          throw new Error(`Failed to fetch bundle: ${response.statusText}`);
+          console.error(`Failed to fetch bundle for ${metadata.id}:`, {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url
+          });
+          throw new Error(`Failed to fetch bundle: ${response.status} ${response.statusText}`);
         }
 
+        console.log(`Successfully fetched bundle for ${metadata.id}`);
         const bundleCode = await response.text();
+        console.log(`Bundle size: ${bundleCode.length} bytes`);
 
         // Create a module context with the global dependencies
         const module = { exports: {} as ModuleExports };
         const require = (moduleName: string) => {
+          console.log(`Resolving external module: ${moduleName}`);
           switch (moduleName) {
             case 'react':
               return React;
@@ -226,19 +244,23 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
             case 'react-native-screens':
               return ReactNativeScreens;
             default:
+              console.error(`Unexpected external module requested: ${moduleName}`);
               throw new Error(`Unexpected external module: ${moduleName}`);
           }
         };
 
         // Execute the bundle
+        console.log(`Executing bundle for ${metadata.id}...`);
         const moduleFunction = new Function('module', 'exports', 'require', bundleCode);
         moduleFunction(module, module.exports, require);
 
         // Get the component
         const Component = module.exports.default || Object.values(module.exports)[0];
         if (typeof Component !== 'function') {
+          console.error(`Invalid component export for ${metadata.id}:`, module.exports);
           throw new Error('Bundle does not export a valid React component');
         }
+        console.log(`Successfully loaded component for ${metadata.id}`);
 
         return { default: Component };
       });
@@ -248,7 +270,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         [metadata.id]: { Component: LazyComponent, metadata },
       }));
     } catch (error) {
-      console.error('Error loading micro-app:', error);
+      console.error(`Error loading micro-app ${metadata.id}:`, error);
       throw error;
     }
   }, [loadedApps]);
