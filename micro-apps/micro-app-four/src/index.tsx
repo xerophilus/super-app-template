@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-interface BrokenComponent {
+type BrokenComponent = {
   someProp: string;
-}
+};
 
 // This component will throw during render
 function ComponentWithRenderError() {

@@ -32,7 +32,7 @@
     "clean": "del-cli lib",
     "prepare": "bob build",
     "build": "npm run clean && bob build && npm run bundle",
-    "bundle": "esbuild src/index.tsx --bundle --platform=node --format=cjs --outfile=../bundles/micro-app-four/bundle.js --external:react --external:react-native --external:react-native-safe-area-context --external:@react-navigation/native --external:@react-navigation/native-stack --external:react-native-screens --loader:.tsx=jsx --loader:.ts=jsx --target=es2017",
+    "bundle": "esbuild src/index.tsx --bundle --platform=node --format=cjs --outfile=../bundles/micro-app-four/bundle.js --external:react --external:react-native --external:react-native-safe-area-context --external:@react-navigation/native --external:@react-navigation/native-stack --external:react-native-screens --loader:.tsx=tsx --loader:.ts=ts --tsconfig=./tsconfig.json --target=es2017",
     "build:watch": "bob watch"
   },
   "dependencies": {
