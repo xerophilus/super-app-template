@@ -93,7 +93,9 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
 
       // If localhost failed or we're not in web dev, use GitHub Pages
       if (!response || !response.ok) {
-        manifestUrl = `${config.baseUrl}/${process.env.EXPO_PUBLIC_REPO_NAME}/${authToken ? 'manifest.json' : 'bundles/manifest.json'}`;
+        manifestUrl = authToken 
+          ? `${config.baseUrl}/manifest.json`  // Full manifest for authenticated users
+          : `${config.baseUrl}/public-manifest.json`;  // Public manifest
         console.log('Fetching from GitHub Pages:', manifestUrl);
         response = await fetch(manifestUrl, {
           headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {},
@@ -123,7 +125,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshApps();
-    const interval = setInterval(refreshApps, 5000);
+    const interval = setInterval(refreshApps, 500000);
     return () => clearInterval(interval);
   }, [refreshApps]);
 
