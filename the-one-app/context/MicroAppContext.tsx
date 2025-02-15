@@ -79,7 +79,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
       let response: Response | null = null;
       let manifestUrl: string;
 
-      if (__DEV__ && Platform.OS === 'web') {
+      // if (__DEV__) {
         try {
           // In development web, try localhost first
           manifestUrl = authToken 
@@ -89,7 +89,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         } catch (e) {
           console.log('Failed to fetch from localhost, falling back to GitHub Pages');
         }
-      }
+      // }
 
       // If localhost failed or we're not in web dev, use GitHub Pages
       if (!response || !response.ok) {
@@ -107,11 +107,35 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
       }
 
       const manifest = await response.json();
+      
+      // Get the set of valid app IDs from the manifest
+      const validAppIds = new Set(manifest.apps.map((app: MicroAppMetadata) => app.id));
+      
+      // Clean up any loaded apps that are no longer in the manifest
+      setLoadedApps(prev => {
+        const newLoadedApps = { ...prev };
+        Object.keys(newLoadedApps).forEach(appId => {
+          if (!validAppIds.has(appId)) {
+            delete newLoadedApps[appId];
+          }
+        });
+        return newLoadedApps;
+      });
+
+      // If current app is no longer valid, clear it
+      if (currentApp && !validAppIds.has(currentApp)) {
+        setCurrentApp(null);
+      }
+
       setAvailableApps(manifest.apps);
     } catch (error) {
       console.error('Error loading manifest:', error);
+      // On error, clear everything to prevent stale state
+      setAvailableApps([]);
+      setLoadedApps({});
+      setCurrentApp(null);
     }
-  }, [authToken]);
+  }, [authToken, currentApp]);
 
   // Mock authentication function (replace with real auth later)
   const authenticate = useCallback((token: string) => {
@@ -119,13 +143,18 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Clear all app-related state
     setAuthToken(null);
     setCurrentApp(null);
+    setLoadedApps({});
+    setAvailableApps([]);
+    // Clear any custom props
+    setAppPropsState({});
   }, []);
 
   useEffect(() => {
     refreshApps();
-    const interval = setInterval(refreshApps, 500000);
+    const interval = setInterval(refreshApps, 5000);
     return () => clearInterval(interval);
   }, [refreshApps]);
 
@@ -149,120 +178,45 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Create a module cache for this app
-      const moduleCache = new Map<string, LoadedModule>();
-
-      // Function to normalize module path
-      function normalizeModulePath(basePath: string, moduleName: string): string {
-        const baseUrl = basePath.substring(0, basePath.lastIndexOf('/'));
-        const normalizedPath = new URL(moduleName, baseUrl + '/').pathname;
-        
-        // Try different extensions
-        const extensions = ['.js', '.jsx', '.ts', '.tsx'];
-        for (const ext of extensions) {
-          const pathWithExt = normalizedPath.endsWith(ext) ? normalizedPath : normalizedPath + ext;
-          try {
-            // Check if file exists (this will throw if it doesn't)
-            fetch(pathWithExt);
-            return pathWithExt;
-          } catch {
-            continue;
-          }
-        }
-        
-        // If no extension worked, return the original with .js
-        return normalizedPath.endsWith('.js') ? normalizedPath : `${normalizedPath}.js`;
+      // Fetch the bundle
+      const response = await fetch(metadata.bundleUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch bundle: ${response.statusText}`);
       }
 
-      // Function to load a module from a URL
-      async function loadModuleFromUrl(url: string): Promise<ModuleExports> {
-        console.log(url)
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch module: ${response.statusText}`);
+      const bundleCode = await response.text();
+
+      // Create a module context with the global dependencies
+      const module = { exports: {} as ModuleExports };
+      const require = (moduleName: string) => {
+        switch (moduleName) {
+          case 'react':
+            return React;
+          case 'react-native':
+            return ReactNative;
+          case 'react/jsx-runtime':
+            return ReactJSXRuntime;
+          case '@react-navigation/native':
+            return ReactNavigation;
+          case '@react-navigation/native-stack':
+            return ReactNavigationNativeStack;
+          case 'react-native-safe-area-context':
+            return ReactNativeSafeAreaContext;
+          case 'react-native-screens':
+            return ReactNativeScreens;
+          default:
+            throw new Error(`Unexpected external module: ${moduleName}`);
         }
-        const moduleCode = await response.text();
-        // Create a module context
-        const moduleContext: ModuleContext = {
-          exports: {},
-          require: (moduleName: string) => {
-            // Handle core modules and dependencies
-            switch (moduleName) {
-              case 'react':
-                return React;
-              case 'react-native':
-                return ReactNative;
-              case 'react/jsx-runtime':
-                return ReactJSXRuntime;
-              case '@react-navigation/native':
-                return ReactNavigation;
-              case '@react-navigation/native-stack':
-                return ReactNavigationNativeStack;
-              case 'react-native-safe-area-context':
-                return ReactNativeSafeAreaContext;
-              case 'react-native-screens':
-                return ReactNativeScreens;
-            }
+      };
 
-            // Handle relative imports
-            if (moduleName.startsWith('./') || moduleName.startsWith('../')) {
-              const moduleUrl = normalizeModulePath(url, moduleName);
+      // Execute the bundle
+      const moduleFunction = new Function('module', 'exports', 'require', bundleCode);
+      moduleFunction(module, module.exports, require);
 
-              // Check if module is already loaded
-              if (moduleCache.has(moduleUrl)) {
-                const cachedModule = moduleCache.get(moduleUrl)!;
-                if (cachedModule.loaded) {
-                  return cachedModule.exports;
-                }
-                // If we hit a circular dependency, return an empty object
-                return {};
-              }
-
-              // Create a new module entry
-              const newModule: LoadedModule = { exports: {}, loaded: false };
-              moduleCache.set(moduleUrl, newModule);
-
-              // Load the module
-              try {
-                newModule.exports = loadModuleFromUrl(moduleUrl);
-                newModule.loaded = true;
-                return newModule.exports;
-              } catch (error) {
-                console.warn(`Failed to load module ${moduleUrl}:`, error);
-                // Return an empty component for failed screen loads
-                return {
-                  default: () => null,
-                  [moduleName.split('/').pop()?.replace(/\.[^/.]+$/, '') || '']: () => null,
-                };
-              }
-            }
-
-            throw new Error(`Module "${moduleName}" not found`);
-          },
-        };
-
-        // Execute the module code
-        const moduleFunction = new Function(
-          'module',
-          'exports',
-          'require',
-          moduleCode
-        );
-
-        moduleFunction(moduleContext, moduleContext.exports, moduleContext.require);
-        return moduleContext.exports;
-      }
-
-      // Load the main module
-      const mainModule = await loadModuleFromUrl(metadata.bundleUrl);
-      console.log('Main module exports:', mainModule);
-
-      // Get the component based on the module structure
-      const Component = mainModule.default || Object.values(mainModule)[0];
-      console.log('Component:', Component);
-
+      // Get the component
+      const Component = module.exports.default || Object.values(module.exports)[0];
       if (typeof Component !== 'function') {
-        throw new Error('Loaded module does not export a valid React component');
+        throw new Error('Bundle does not export a valid React component');
       }
 
       setLoadedApps(prev => ({

@@ -8,6 +8,7 @@ export interface MicroAppMetadata {
   };
   bundleUrl: string;
   defaultProps?: Record<string, any>;
+  requiresAuth?: boolean;
 }
 
 export interface LoadedMicroApp {

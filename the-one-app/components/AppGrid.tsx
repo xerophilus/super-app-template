@@ -35,7 +35,7 @@ export default function AppGrid() {
   
   // Wrap the hook in a try-catch to handle potential context initialization issues
   try {
-    const { availableApps, loadApp, setCurrentApp } = useMicroApps();
+    const { availableApps, loadApp, setCurrentApp, isAuthenticated } = useMicroApps();
 
     const handleAppPress = async (appId: string) => {
       try {
@@ -58,9 +58,17 @@ export default function AppGrid() {
       );
     }
 
+    // Filter apps based on authentication status
+    const visibleApps = availableApps.filter(app => {
+      // If user is authenticated, show all apps
+      if (isAuthenticated) return true;
+      // If user is not authenticated, only show apps that don't require auth
+      return !app.requiresAuth;
+    });
+
     return (
       <View style={styles.container}>
-        {availableApps.map((app) => (
+        {visibleApps.map((app) => (
           <TouchableOpacity
             key={app.id}
             style={styles.appItem}
