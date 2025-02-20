@@ -61,7 +61,7 @@ function getDefaultProps(appId: string): Record<string, any> {
 
 function getBundleUrl(appId: string): string {
   // Use the new bundle naming convention: appId.bundle.js
-  const bundleFileName = `${appId}.bundle.js`;
+  const bundleFileName = `${appId}/bundle.js`;
 
   // If using GitHub Pages, format URL accordingly
   if (config.baseUrl.includes('github.io')) {

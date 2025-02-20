@@ -8,7 +8,7 @@
         "type": "emoji",
         "value": "🐛"
       },
-      "bundleUrl": "http://localhost:3000/micro-app-four.bundle.js",
+      "bundleUrl": "http://localhost:3000/micro-app-four/bundle.js",
       "defaultProps": {},
       "requiresAuth": false,
       "version": "0.1.0"
@@ -21,7 +21,7 @@
         "type": "emoji",
         "value": "📱"
       },
-      "bundleUrl": "http://localhost:3000/micro-app-one.bundle.js",
+      "bundleUrl": "http://localhost:3000/micro-app-one/bundle.js",
       "defaultProps": {
         "theme": "light"
       },
@@ -36,7 +36,7 @@
         "type": "emoji",
         "value": "🎮"
       },
-      "bundleUrl": "http://localhost:3000/micro-app-two.bundle.js",
+      "bundleUrl": "http://localhost:3000/micro-app-two/bundle.js",
       "defaultProps": {
         "theme": "light"
       },

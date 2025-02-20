@@ -92,7 +92,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}`;
 
       // For GitHub Pages, we need to include the repo name in the path
-      const manifestPath = isUsingLocalhost ? '' : `${process.env.EXPO_PUBLIC_REPO_NAME}/`;
+      const manifestPath = isUsingLocalhost ? '' : ``;
 
       console.log('Fetching manifest from base URL:', baseUrl);
 
@@ -227,8 +227,8 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
       
       // Adjust the bundle URL based on current environment
       const bundleUrl = isUsingLocalhost
-        ? `http://localhost:3000/${metadata.id}.bundle.js`
-        : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}/${metadata.id}.bundle.js`;
+        ? `http://localhost:3000/${metadata.id}/bundle.js`
+        : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}/${metadata.id}/bundle.js`;
       
       console.log(`Bundle URL: ${bundleUrl}`);
 

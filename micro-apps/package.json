@@ -4,18 +4,21 @@
   "description": "Micro apps collection",
   "private": true,
   "workspaces": [
+    "micro-app-four",
+    "micro-app-hello-world",
     "micro-app-one",
-    "micro-app-two",
+    "micro-app-test-app",
     "micro-app-three",
-    "micro-app-four"
+    "micro-app-two"
   ],
   "scripts": {
     "generate-manifest": "ts-node generate-manifest.ts",
-    "build-all": "npm run build --workspace=micro-app-one && npm run build --workspace=micro-app-two && npm run build --workspace=micro-app-three && npm run build --workspace=micro-app-four && npm run generate-manifest && cp manifest.json bundles/ && cp public-manifest.json bundles/ && cp protected-manifest.json bundles/"
+    "build-all": "npm run build --workspace=micro-app-one && npm run build --workspace=micro-app-two && npm run build --workspace=micro-app-three && npm run build --workspace=micro-app-four && npm run generate-manifest && cp manifest.json bundles/ && cp public-manifest.json bundles/ && cp protected-manifest.json bundles/",
+    "create-app": "ts-node create-micro-app.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
-} 
+}

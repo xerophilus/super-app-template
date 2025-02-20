@@ -8,7 +8,7 @@
         "type": "emoji",
         "value": "🎅"
       },
-      "bundleUrl": "http://localhost:3000/micro-app-three.bundle.js",
+      "bundleUrl": "http://localhost:3000/micro-app-three/bundle.js",
       "defaultProps": {
         "name": "Guest",
         "gender": "Unknown"
