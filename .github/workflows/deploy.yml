@@ -48,17 +48,6 @@ jobs:
           cp bundles/public-manifest.json bundles/public-manifest.json.tmp
           cp bundles/protected-manifest.json bundles/protected-manifest.json.tmp
           
-          # Rename bundle files to their final names
-          find bundles -type f -name "bundle.js" | while read file; do
-            dir=$(dirname "$file")
-            app=$(basename "$dir")
-            echo "Moving bundle from $file to bundles/$app.bundle.js"
-            mv "$file" "bundles/$app.bundle.js"
-          done
-          
-          # Clean up empty directories
-          find bundles -type d -empty -delete
-          
           # Move manifest files back
           mv bundles/manifest.json.tmp bundles/manifest.json
           mv bundles/public-manifest.json.tmp bundles/public-manifest.json
@@ -83,9 +72,9 @@ jobs:
           
           echo "=== Verifying bundle files ==="
           expected_bundles=(
-            "micro-app-one.bundle.js"
-            "micro-app-two.bundle.js"
-            "micro-app-three.bundle.js"
+            "micro-app-one/bundle.js"
+            "micro-app-two/bundle.js"
+            "micro-app-three/bundle.js"
           )
           
           for bundle in "${expected_bundles[@]}"; do
