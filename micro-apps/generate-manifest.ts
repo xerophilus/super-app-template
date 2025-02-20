@@ -100,9 +100,13 @@ function generateManifest(): Manifest {
     const appId = entry.name;
     const app: MicroAppManifest = {
       id: appId,
-      name: packageJson.name.split('/').pop()?.split('-').map(
-        (word: string) => word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' ') || appId,
+      name: packageJson.name 
+        ? packageJson.name.split('/').pop()?.split('-').map(
+            (word: string) => word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ') || appId
+        : appId.split('-').map(
+            (word: string) => word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' '),
       description: packageJson.description || `A micro app`,
       icon: getDefaultIcon(appId),
       bundleUrl: getBundleUrl(appId),

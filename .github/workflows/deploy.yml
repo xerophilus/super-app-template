@@ -83,9 +83,9 @@ jobs:
           
           echo "=== Verifying bundle files ==="
           expected_bundles=(
-            "micro-app-one/bundle.js"
-            "micro-app-two/bundle.js"
-            "micro-app-three/bundle.js"
+            "micro-app-one.bundle.js"
+            "micro-app-two.bundle.js"
+            "micro-app-three.bundle.js"
           )
           
           for bundle in "${expected_bundles[@]}"; do

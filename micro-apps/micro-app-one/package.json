@@ -32,7 +32,7 @@
     "clean": "del-cli lib",
     "prepare": "bob build",
     "build": "npm run clean && bob build && npm run bundle",
-    "bundle": "esbuild src/index.tsx --bundle --platform=node --format=cjs --outfile=../bundles/micro-app-one/bundle.js --external:react --external:react-native --external:react-native-safe-area-context --external:@react-navigation/native --external:@react-navigation/native-stack --external:react-native-screens",
+    "bundle": "mkdir -p ../bundles/micro-app-one && esbuild src/index.tsx --bundle --platform=node --format=cjs --outfile=../bundles/micro-app-one/bundle.js --external:react --external:react-native --external:react-native-safe-area-context --external:@react-navigation/native --external:@react-navigation/native-stack --external:react-native-screens",
     "build:watch": "bob watch"
   },
   "keywords": [
