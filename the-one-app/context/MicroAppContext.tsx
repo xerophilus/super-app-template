@@ -21,6 +21,8 @@ interface MicroAppContextType {
   authenticate: (token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  isUsingLocalhost: boolean;
+  toggleBaseUrl: () => void;
 }
 
 const MicroAppContext = createContext<MicroAppContextType | null>(null);
@@ -73,24 +75,35 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
   const [currentApp, setCurrentApp] = useState<string | null>(null);
   const [appProps, setAppPropsState] = useState<Record<string, Record<string, any>>>({});
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [isUsingLocalhost, setIsUsingLocalhost] = useState(true);
+
+  const toggleBaseUrl = useCallback(() => {
+    setIsUsingLocalhost(prev => !prev);
+    // Clear loaded apps when switching URLs
+    setLoadedApps({});
+    setCurrentApp(null);
+  }, []);
 
   const refreshApps = useCallback(async () => {
     try {
-      // Determine the base URL based on environment
-      const baseUrl = __DEV__ && Platform.OS === 'web'
+      // Determine the base URL based on environment and current setting
+      const baseUrl = isUsingLocalhost
         ? 'http://localhost:3000'
         : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}`;
+
+      // For GitHub Pages, we need to include the repo name in the path
+      const manifestPath = isUsingLocalhost ? '' : `${process.env.EXPO_PUBLIC_REPO_NAME}/`;
 
       console.log('Fetching manifest from base URL:', baseUrl);
 
       let manifestUrl: string;
       let response: Response | null = null;
+      let manifest: { apps: MicroAppMetadata[] } | null = null;
 
       // Try to fetch the appropriate manifest based on auth status
       if (authToken) {
-        // Try to fetch the full manifest first
         try {
-          manifestUrl = `${baseUrl}/manifest.json`;
+          manifestUrl = `${baseUrl}/${manifestPath}manifest.json`;
           console.log('Attempting to fetch full manifest from:', manifestUrl);
           response = await fetch(manifestUrl, {
             headers: {
@@ -99,33 +112,46 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
             }
           });
           
-          if (!response.ok) {
+          if (response.ok) {
+            manifest = await response.json();
+            console.log('Successfully loaded full manifest');
+          } else {
             console.log(`Full manifest fetch failed with status: ${response.status}`);
-            throw new Error('Full manifest not available');
           }
         } catch (e) {
           console.error('Failed to fetch full manifest:', e);
-          response = null;
         }
       }
 
       // If no auth token or full manifest fetch failed, get the public manifest
-      if (!response || !response.ok) {
-        manifestUrl = `${baseUrl}/public-manifest.json`;
-        console.log('Attempting to fetch public manifest from:', manifestUrl);
-        response = await fetch(manifestUrl, {
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+      if (!manifest) {
+        try {
+          manifestUrl = `${baseUrl}/${manifestPath}public-manifest.json`;
+          console.log('Attempting to fetch public manifest from:', manifestUrl);
+          response = await fetch(manifestUrl, {
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+
+          if (response.ok) {
+            manifest = await response.json();
+            console.log('Successfully loaded public manifest');
+          } else {
+            console.error(`Public manifest fetch failed with status: ${response.status}`);
+            throw new Error(`Failed to fetch public manifest: ${response.status} ${response.statusText}`);
           }
-        });
+        } catch (e) {
+          console.error('Failed to fetch public manifest:', e);
+          throw e;
+        }
       }
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch manifest: ${response.status} ${response.statusText}`);
+      if (!manifest) {
+        throw new Error('Failed to fetch any manifest');
       }
 
-      const manifest = await response.json();
       console.log('Successfully loaded manifest with apps:', manifest.apps.length);
       console.log('Available apps:', manifest.apps.map((app: MicroAppMetadata) => app.id).join(', '));
       
@@ -154,7 +180,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
       setLoadedApps({});
       setCurrentApp(null);
     }
-  }, [authToken, currentApp]);
+  }, [authToken, currentApp, isUsingLocalhost]);
 
   // Mock authentication function (replace with real auth later)
   const authenticate = useCallback((token: string) => {
@@ -198,13 +224,19 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log(`Loading micro-app: ${metadata.id}`);
-      console.log(`Bundle URL: ${metadata.bundleUrl}`);
+      
+      // Adjust the bundle URL based on current environment
+      const bundleUrl = isUsingLocalhost
+        ? `http://localhost:3000/${metadata.id}.bundle.js`
+        : `https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}/${metadata.id}.bundle.js`;
+      
+      console.log(`Bundle URL: ${bundleUrl}`);
 
       // Create a lazy-loaded component
       const LazyComponent = React.lazy(async () => {
         // Fetch the bundle
         console.log(`Fetching bundle for ${metadata.id}...`);
-        const response = await fetch(metadata.bundleUrl, {
+        const response = await fetch(bundleUrl, {
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'
@@ -273,7 +305,7 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
       console.error(`Error loading micro-app ${metadata.id}:`, error);
       throw error;
     }
-  }, [loadedApps]);
+  }, [loadedApps, isUsingLocalhost]);
 
   return (
     <MicroAppContext.Provider
@@ -289,6 +321,8 @@ export function MicroAppProvider({ children }: { children: React.ReactNode }) {
         authenticate,
         logout,
         isAuthenticated: !!authToken,
+        isUsingLocalhost,
+        toggleBaseUrl,
       }}
     >
       {children}

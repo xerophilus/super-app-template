@@ -60,16 +60,16 @@ function getDefaultProps(appId: string): Record<string, any> {
 }
 
 function getBundleUrl(appId: string): string {
-  // Use the new bundle naming convention
-  const bundlePathSuffix = `${appId}.bundle.js`;
+  // Use the new bundle naming convention: appId.bundle.js
+  const bundleFileName = `${appId}.bundle.js`;
 
   // If using GitHub Pages, format URL accordingly
   if (config.baseUrl.includes('github.io')) {
-    return `${config.baseUrl}/${config.repoName}/${bundlePathSuffix}`;
+    return `${config.baseUrl}/${config.repoName}/${bundleFileName}`;
   }
 
-  // For local development
-  return `${config.baseUrl}/${bundlePathSuffix}`;
+  // For local development, just append the bundle filename
+  return `${config.baseUrl}/${bundleFileName}`;
 }
 
 function generateManifest(): Manifest {
@@ -130,32 +130,51 @@ const manifest = generateManifest();
 const publicApps = manifest.apps.filter(app => !app.requiresAuth);
 const protectedApps = manifest.apps.filter(app => app.requiresAuth);
 
-// Write the manifests to the bundles directory
+// Write the manifests to both the bundles directory and root directory for local development
 const bundlesDir = path.join(__dirname, 'bundles');
 fs.mkdirSync(bundlesDir, { recursive: true });
 
-// Public manifest (no auth required)
-const publicManifest = { apps: publicApps };
-fs.writeFileSync(
-  path.join(bundlesDir, 'public-manifest.json'),
-  JSON.stringify(publicManifest, null, 2)
-);
+// Function to write manifest files to a directory
+function writeManifestFiles(directory: string) {
+  // Public manifest (no auth required)
+  const publicManifest = { apps: publicApps };
+  fs.writeFileSync(
+    path.join(directory, 'public-manifest.json'),
+    JSON.stringify(publicManifest, null, 2),
+    'utf8'
+  );
+  console.log(`Written public manifest to ${directory}/public-manifest.json`);
 
-// Protected manifest (auth required)
-const protectedManifest = { apps: protectedApps };
-fs.writeFileSync(
-  path.join(bundlesDir, 'protected-manifest.json'),
-  JSON.stringify(protectedManifest, null, 2)
-);
+  // Protected manifest (auth required)
+  const protectedManifest = { apps: protectedApps };
+  fs.writeFileSync(
+    path.join(directory, 'protected-manifest.json'),
+    JSON.stringify(protectedManifest, null, 2),
+    'utf8'
+  );
+  console.log(`Written protected manifest to ${directory}/protected-manifest.json`);
 
-// Full manifest (all apps)
-fs.writeFileSync(
-  path.join(bundlesDir, 'manifest.json'),
-  JSON.stringify(manifest, null, 2)
-);
+  // Full manifest (all apps)
+  fs.writeFileSync(
+    path.join(directory, 'manifest.json'),
+    JSON.stringify(manifest, null, 2),
+    'utf8'
+  );
+  console.log(`Written full manifest to ${directory}/manifest.json`);
+}
+
+// Write to bundles directory (for GitHub Pages)
+writeManifestFiles(bundlesDir);
+
+// Write to root directory (for local development)
+writeManifestFiles(__dirname);
 
 // Log the results
-console.log('Generated manifests with configuration:', config);
+console.log('\nManifest generation summary:');
+console.log('Public apps:', publicApps.length);
+console.log('Protected apps:', protectedApps.length);
+console.log('Total apps:', manifest.apps.length);
+
 console.log('\nPublic apps:');
 publicApps.forEach(logAppInfo);
 console.log('\nProtected apps:');

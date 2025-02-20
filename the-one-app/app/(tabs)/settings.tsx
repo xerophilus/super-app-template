@@ -5,7 +5,7 @@ import { useMicroApps } from '../../context/MicroAppContext';
 type GenderOption = 'Unknown' | 'Male' | 'Female';
 
 export default function SettingsScreen() {
-  const { setAppProps, authenticate, logout, isAuthenticated } = useMicroApps();
+  const { setAppProps, authenticate, logout, isAuthenticated, isUsingLocalhost, toggleBaseUrl } = useMicroApps();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<GenderOption>('Unknown');
 
@@ -47,6 +47,25 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
+      
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Development Settings</Text>
+        <View style={styles.settingItem}>
+          <Text style={styles.settingText}>Use Localhost</Text>
+          <Switch
+            value={isUsingLocalhost}
+            onValueChange={toggleBaseUrl}
+          />
+        </View>
+        <Text style={styles.settingDescription}>
+          {isUsingLocalhost 
+            ? 'Currently using: http://localhost:3000'
+            : `Currently using: https://${process.env.EXPO_PUBLIC_GITHUB_USER}.github.io/${process.env.EXPO_PUBLIC_REPO_NAME}`
+          }
+        </Text>
+      </View>
+
+      <View style={styles.divider} />
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Authentication</Text>
@@ -236,5 +255,20 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 20,
     lineHeight: 22,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  settingText: {
+    fontSize: 16,
+    color: '#34495E',
+    fontWeight: '600',
+  },
+  settingDescription: {
+    fontSize: 14,
+    color: '#7F8C8D',
+    marginTop: 8,
   },
 }); 

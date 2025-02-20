@@ -42,6 +42,12 @@ jobs:
           # Build all micro-apps
           npm run build-all
           
+          # Move manifest files to root of bundles directory
+          echo "Moving manifest files to root of bundles directory..."
+          cp bundles/manifest.json bundles/manifest.json.tmp
+          cp bundles/public-manifest.json bundles/public-manifest.json.tmp
+          cp bundles/protected-manifest.json bundles/protected-manifest.json.tmp
+          
           # Rename bundle files to their final names
           find bundles -type f -name "bundle.js" | while read file; do
             dir=$(dirname "$file")
@@ -52,6 +58,11 @@ jobs:
           
           # Clean up empty directories
           find bundles -type d -empty -delete
+          
+          # Move manifest files back
+          mv bundles/manifest.json.tmp bundles/manifest.json
+          mv bundles/public-manifest.json.tmp bundles/public-manifest.json
+          mv bundles/protected-manifest.json.tmp bundles/protected-manifest.json
           
           # Verify deployment files
           echo "=== Contents of bundles directory ==="
@@ -80,7 +91,7 @@ jobs:
           
           for bundle in "${expected_bundles[@]}"; do
             if [ -f "bundles/$bundle" ]; then
-              echo "✓ Found $bundle ($(stat -f%z "bundles/$bundle") bytes)"
+              echo "✓ Found $bundle ($(wc -c < "bundles/$bundle") bytes)"
             else
               echo "✗ Missing $bundle"
               exit 1

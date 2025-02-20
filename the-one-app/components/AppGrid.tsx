@@ -5,7 +5,7 @@ import { useMicroApps } from '../context/MicroAppContext';
 import { MicroAppMetadata } from '../types/micro-apps';
 
 const { width } = Dimensions.get('window');
-const COLUMN_COUNT = 3;
+const COLUMN_COUNT = 2;
 const SPACING = 16;
 const ITEM_SIZE = ((width / COLUMN_COUNT) - SPACING * COLUMN_COUNT) ;
 

@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "generate-manifest": "ts-node generate-manifest.ts",
-    "build-all": "npm run build --workspace=micro-app-one && npm run build --workspace=micro-app-two && npm run build --workspace=micro-app-three && npm run build --workspace=micro-app-four && npm run generate-manifest"
+    "build-all": "npm run build --workspace=micro-app-one && npm run build --workspace=micro-app-two && npm run build --workspace=micro-app-three && npm run build --workspace=micro-app-four && npm run generate-manifest && cp manifest.json bundles/ && cp public-manifest.json bundles/ && cp protected-manifest.json bundles/"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",

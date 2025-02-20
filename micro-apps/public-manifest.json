@@ -29,22 +29,6 @@
       "version": "0.1.0"
     },
     {
-      "id": "micro-app-three",
-      "name": "Micro App Three",
-      "description": "Santa's Wish List micro app",
-      "icon": {
-        "type": "emoji",
-        "value": "🎅"
-      },
-      "bundleUrl": "http://localhost:3000/micro-app-three.bundle.js",
-      "defaultProps": {
-        "name": "Guest",
-        "gender": "Unknown"
-      },
-      "requiresAuth": true,
-      "version": "0.1.0"
-    },
-    {
       "id": "micro-app-two",
       "name": "Micro App Two",
       "description": "second micro app",
