@@ -14,8 +14,7 @@
     "build-micro-app-one": "cd micro-apps/micro-app-one && npm run build && cp -r lib/* ../../micro-apps/bundles/micro-app-one/",
     "build-micro-app-two": "cd micro-apps/micro-app-two && npm run build && cp -r lib/* ../../micro-apps/bundles/micro-app-two/",
     "build-micro-app-three": "cd micro-apps/micro-app-three && npm run build && cp -r lib/* ../../micro-apps/bundles/micro-app-three/",
-    "build-micro-app-four": "cd micro-apps/micro-app-four && npm run build && cp -r lib/* ../../micro-apps/bundles/micro-app-four/",
-    "build-micro-apps": "npm run clean && npm run build-micro-app-one && npm run build-micro-app-two && npm run build-micro-app-three && npm run build-micro-app-four && cp micro-apps/manifest.json micro-apps/bundles/",
+    "build-micro-apps": "npm run clean && npm run build-micro-app-one && npm run build-micro-app-two && npm run build-micro-app-three && cp micro-apps/manifest.json micro-apps/bundles/",
     "build-and-dev": "npm run build-micro-apps && npm run dev"
   },
   "devDependencies": {

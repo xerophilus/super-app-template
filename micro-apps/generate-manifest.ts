@@ -34,7 +34,6 @@ function getDefaultIcon(appId: string): MicroAppIcon {
     'micro-app-one': '📱',
     'micro-app-two': '🎮',
     'micro-app-three': '🎅',
-    'micro-app-four': '🐛',
   };
   return {
     type: 'emoji',
@@ -53,8 +52,7 @@ function getDefaultProps(appId: string): Record<string, any> {
     'micro-app-three': {
       name: 'Guest',
       gender: 'Unknown',
-    },
-    'micro-app-four': {},
+    }
   };
   return defaultProps[appId] || {};
 }
